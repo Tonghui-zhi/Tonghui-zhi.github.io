@@ -1,0 +1,361 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>因果发现03：基于评分的方法 | ZHI's room</title><meta name="author" content="ZHI"><meta name="copyright" content="ZHI"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="1. 基于评分的方法概述基于评分的方法（Score-based Methods）是因果发现中的另一类重要方法，与基于约束的方法不同，这类方法通过定义一个评分函数来评估不同因果结构的优劣，然后搜索最优的因果结构。 1.1 基本思想基于评分的方法的核心思想是：  为每个可能的因果图结构定义一个评分函数 通过搜索算法找到评分最高的因果图结构 评分函数通常基于数据的似然函数或信息准则  1.2 主要优">
+<meta property="og:type" content="article">
+<meta property="og:title" content="因果发现03：基于评分的方法">
+<meta property="og:url" content="http://example.com/2024/03/22/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B003%EF%BC%9A%E5%9F%BA%E4%BA%8E%E8%AF%84%E5%88%86%E7%9A%84%E6%96%B9%E6%B3%95/index.html">
+<meta property="og:site_name" content="ZHI&#39;s room">
+<meta property="og:description" content="1. 基于评分的方法概述基于评分的方法（Score-based Methods）是因果发现中的另一类重要方法，与基于约束的方法不同，这类方法通过定义一个评分函数来评估不同因果结构的优劣，然后搜索最优的因果结构。 1.1 基本思想基于评分的方法的核心思想是：  为每个可能的因果图结构定义一个评分函数 通过搜索算法找到评分最高的因果图结构 评分函数通常基于数据的似然函数或信息准则  1.2 主要优">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-tag">
+<meta property="article:published_time" content="2024-03-21T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-06-18T13:21:27.779Z">
+<meta property="article:author" content="ZHI">
+<meta property="article:tag" content="论文总结">
+<meta property="article:tag" content="技术分享">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-tag"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "因果发现03：基于评分的方法",
+  "url": "http://example.com/2024/03/22/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B003%EF%BC%9A%E5%9F%BA%E4%BA%8E%E8%AF%84%E5%88%86%E7%9A%84%E6%96%B9%E6%B3%95/",
+  "image": "https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-tag",
+  "datePublished": "2024-03-21T16:00:00.000Z",
+  "dateModified": "2025-06-18T13:21:27.779Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "ZHI",
+      "url": "http://example.com/"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-favicon"><link rel="canonical" href="http://example.com/2024/03/22/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B003%EF%BC%9A%E5%9F%BA%E4%BA%8E%E8%AF%84%E5%88%86%E7%9A%84%E6%96%B9%E6%B3%95/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '因果发现03：基于评分的方法',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="referrer" content="no-referrer"/><!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head><body><div id="web_bg" style="background-color: #091366;"></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-tag);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">ZHI's room</span></a><a class="nav-page-title" href="/"><span class="site-name">因果发现03：基于评分的方法</span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">因果发现03：基于评分的方法</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-03-21T16:00:00.000Z" title="发表于 2024-03-22 00:00:00">2024-03-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-06-18T13:21:27.779Z" title="更新于 2025-06-18 21:21:27">2025-06-18</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><meta name="referrer" content="no-referrer" />
+
+<h1 id="1-基于评分的方法概述"><a href="#1-基于评分的方法概述" class="headerlink" title="1. 基于评分的方法概述"></a>1. 基于评分的方法概述</h1><p>基于评分的方法（Score-based Methods）是因果发现中的另一类重要方法，与基于约束的方法不同，这类方法通过定义一个评分函数来评估不同因果结构的优劣，然后搜索最优的因果结构。</p>
+<h2 id="1-1-基本思想"><a href="#1-1-基本思想" class="headerlink" title="1.1 基本思想"></a>1.1 基本思想</h2><p>基于评分的方法的核心思想是：</p>
+<ul>
+<li>为每个可能的因果图结构定义一个评分函数</li>
+<li>通过搜索算法找到评分最高的因果图结构</li>
+<li>评分函数通常基于数据的似然函数或信息准则</li>
+</ul>
+<h2 id="1-2-主要优势"><a href="#1-2-主要优势" class="headerlink" title="1.2 主要优势"></a>1.2 主要优势</h2><ol>
+<li><strong>全局最优性</strong>：可以找到全局最优的因果结构</li>
+<li><strong>处理噪声</strong>：对数据中的噪声更加鲁棒</li>
+<li><strong>灵活性</strong>：可以结合不同的先验知识</li>
+</ol>
+<h2 id="1-3-主要挑战"><a href="#1-3-主要挑战" class="headerlink" title="1.3 主要挑战"></a>1.3 主要挑战</h2><ol>
+<li><strong>计算复杂度</strong>：搜索空间随变量数量指数增长</li>
+<li><strong>局部最优</strong>：容易陷入局部最优解</li>
+<li><strong>评分函数选择</strong>：需要选择合适的评分函数</li>
+</ol>
+<h1 id="2-常用评分函数"><a href="#2-常用评分函数" class="headerlink" title="2. 常用评分函数"></a>2. 常用评分函数</h1><h2 id="2-1-贝叶斯信息准则（BIC）"><a href="#2-1-贝叶斯信息准则（BIC）" class="headerlink" title="2.1 贝叶斯信息准则（BIC）"></a>2.1 贝叶斯信息准则（BIC）</h2><p>BIC评分函数定义为：</p>
+<p>$$S_{BIC}(G) &#x3D; \log P(D|G) - \frac{d}{2} \log N$$</p>
+<p>其中：</p>
+<ul>
+<li>$P(D|G)$ 是给定图结构$G$的数据似然</li>
+<li>$d$ 是模型参数数量</li>
+<li>$N$ 是样本数量</li>
+</ul>
+<h2 id="2-2-Akaike信息准则（AIC）"><a href="#2-2-Akaike信息准则（AIC）" class="headerlink" title="2.2 Akaike信息准则（AIC）"></a>2.2 Akaike信息准则（AIC）</h2><p>AIC评分函数定义为：</p>
+<p>$$S_{AIC}(G) &#x3D; \log P(D|G) - d$$</p>
+<h2 id="2-3-最小描述长度（MDL）"><a href="#2-3-最小描述长度（MDL）" class="headerlink" title="2.3 最小描述长度（MDL）"></a>2.3 最小描述长度（MDL）</h2><p>MDL评分函数定义为：</p>
+<p>$$S_{MDL}(G) &#x3D; -\log P(D|G) + \frac{d}{2} \log N + \log P(G)$$</p>
+<p>其中$P(G)$是图结构的先验概率。</p>
+<h1 id="3-搜索算法"><a href="#3-搜索算法" class="headerlink" title="3. 搜索算法"></a>3. 搜索算法</h1><h2 id="3-1-贪婪搜索"><a href="#3-1-贪婪搜索" class="headerlink" title="3.1 贪婪搜索"></a>3.1 贪婪搜索</h2><p>贪婪搜索算法从空图开始，逐步添加或删除边：</p>
+<ol>
+<li>初始化：从空图开始</li>
+<li>迭代：在每一步中，尝试所有可能的单步操作（添加、删除、反转边）</li>
+<li>选择：选择使评分增加最多的操作</li>
+<li>终止：当没有操作能提高评分时停止</li>
+</ol>
+<h2 id="3-2-模拟退火"><a href="#3-2-模拟退火" class="headerlink" title="3.2 模拟退火"></a>3.2 模拟退火</h2><p>模拟退火算法通过引入随机性来避免局部最优：</p>
+<ol>
+<li>初始化：随机选择一个图结构</li>
+<li>迭代：随机选择一个操作</li>
+<li>接受准则：以一定概率接受使评分降低的操作</li>
+<li>降温：逐渐降低接受概率</li>
+</ol>
+<h2 id="3-3-遗传算法"><a href="#3-3-遗传算法" class="headerlink" title="3.3 遗传算法"></a>3.3 遗传算法</h2><p>遗传算法通过模拟进化过程来搜索最优解：</p>
+<ol>
+<li>初始化：生成一组随机图结构</li>
+<li>评估：计算每个结构的评分</li>
+<li>选择：选择评分高的结构</li>
+<li>交叉：将选中的结构进行交叉操作</li>
+<li>变异：对结构进行随机变异</li>
+</ol>
+<h1 id="4-实际应用示例"><a href="#4-实际应用示例" class="headerlink" title="4. 实际应用示例"></a>4. 实际应用示例</h1><h2 id="4-1-高斯贝叶斯网络"><a href="#4-1-高斯贝叶斯网络" class="headerlink" title="4.1 高斯贝叶斯网络"></a>4.1 高斯贝叶斯网络</h2><p>对于高斯贝叶斯网络，评分函数可以写为：</p>
+<p>$$S(G) &#x3D; \sum_{i&#x3D;1}^{n} \left[ \log P(X_i|Pa_i) - \frac{|Pa_i| + 1}{2} \log N \right]$$</p>
+<p>其中$Pa_i$是节点$i$的父节点集合。</p>
+<h2 id="4-2-离散贝叶斯网络"><a href="#4-2-离散贝叶斯网络" class="headerlink" title="4.2 离散贝叶斯网络"></a>4.2 离散贝叶斯网络</h2><p>对于离散贝叶斯网络，可以使用贝叶斯狄利克雷评分：</p>
+<p>$$S(G) &#x3D; \sum_{i&#x3D;1}^{n} \sum_{j&#x3D;1}^{q_i} \left[ \log \frac{\Gamma(\alpha_{ij})}{\Gamma(\alpha_{ij} + N_{ij})} + \sum_{k&#x3D;1}^{r_i} \log \frac{\Gamma(\alpha_{ijk} + N_{ijk})}{\Gamma(\alpha_{ijk})} \right]$$</p>
+<p>其中$\alpha_{ijk}$是狄利克雷先验参数，$N_{ijk}$是观测计数。</p>
+<h1 id="5-格兰杰因果检验"><a href="#5-格兰杰因果检验" class="headerlink" title="5. 格兰杰因果检验"></a>5. 格兰杰因果检验</h1><h2 id="5-1-基本概念"><a href="#5-1-基本概念" class="headerlink" title="5.1 基本概念"></a>5.1 基本概念</h2><p>格兰杰因果检验（Granger Causality Test）是由诺贝尔经济学奖得主Clive Granger在1969年提出的一种时间序列因果检验方法。虽然严格来说它检验的是”预测因果关系”而非真正的因果关系，但在实际应用中得到了广泛应用。</p>
+<h3 id="5-1-1-格兰杰因果的定义"><a href="#5-1-1-格兰杰因果的定义" class="headerlink" title="5.1.1 格兰杰因果的定义"></a>5.1.1 格兰杰因果的定义</h3><p>变量$X$格兰杰导致变量$Y$，当且仅当在预测$Y$的未来值时，使用$X$的历史信息比不使用$X$的历史信息能够提供更好的预测效果。</p>
+<p>数学上，对于时间序列$X_t$和$Y_t$，如果：</p>
+<p>$$E[Y_t|Y_{t-1}, Y_{t-2}, …, X_{t-1}, X_{t-2}, …] \neq E[Y_t|Y_{t-1}, Y_{t-2}, …]$$</p>
+<p>则称$X$格兰杰导致$Y$。</p>
+<h2 id="5-2-检验方法"><a href="#5-2-检验方法" class="headerlink" title="5.2 检验方法"></a>5.2 检验方法</h2><h3 id="5-2-1-双变量格兰杰因果检验"><a href="#5-2-1-双变量格兰杰因果检验" class="headerlink" title="5.2.1 双变量格兰杰因果检验"></a>5.2.1 双变量格兰杰因果检验</h3><p>对于两个时间序列$X_t$和$Y_t$，格兰杰因果检验通过比较两个回归模型：</p>
+<p><strong>受限模型（Restricted Model）</strong>：<br>$$Y_t &#x3D; \alpha_0 + \sum_{i&#x3D;1}^{p} \alpha_i Y_{t-i} + \epsilon_t$$</p>
+<p><strong>非受限模型（Unrestricted Model）</strong>：<br>$$Y_t &#x3D; \alpha_0 + \sum_{i&#x3D;1}^{p} \alpha_i Y_{t-i} + \sum_{i&#x3D;1}^{p} \beta_i X_{t-i} + \epsilon_t$$</p>
+<p>其中$p$是滞后阶数。</p>
+<h3 id="5-2-2-检验统计量"><a href="#5-2-2-检验统计量" class="headerlink" title="5.2.2 检验统计量"></a>5.2.2 检验统计量</h3><p>使用F检验来比较两个模型：</p>
+<p>$$F &#x3D; \frac{(RSS_R - RSS_U)&#x2F;p}{RSS_U&#x2F;(T-2p-1)}$$</p>
+<p>其中：</p>
+<ul>
+<li>$RSS_R$是受限模型的残差平方和</li>
+<li>$RSS_U$是非受限模型的残差平方和</li>
+<li>$T$是样本数量</li>
+<li>$p$是滞后阶数</li>
+</ul>
+<p>如果F统计量显著，则拒绝”$X$不格兰杰导致$Y$”的原假设。</p>
+<h2 id="5-3-多变量格兰杰因果检验"><a href="#5-3-多变量格兰杰因果检验" class="headerlink" title="5.3 多变量格兰杰因果检验"></a>5.3 多变量格兰杰因果检验</h2><p>在实际应用中，通常需要考虑多个变量之间的因果关系。多变量格兰杰因果检验使用向量自回归（VAR）模型：</p>
+<p>$$\mathbf{Y}_t &#x3D; \mathbf{A}<em>0 + \sum</em>{i&#x3D;1}^{p} \mathbf{A}<em>i \mathbf{Y}</em>{t-i} + \mathbf{\epsilon}_t$$</p>
+<p>其中$\mathbf{Y}_t$是$n \times 1$的向量，$\mathbf{A}_i$是$n \times n$的系数矩阵。</p>
+<h2 id="5-4-格兰杰因果的局限性"><a href="#5-4-格兰杰因果的局限性" class="headerlink" title="5.4 格兰杰因果的局限性"></a>5.4 格兰杰因果的局限性</h2><h3 id="5-4-1-概念局限性"><a href="#5-4-1-概念局限性" class="headerlink" title="5.4.1 概念局限性"></a>5.4.1 概念局限性</h3><ol>
+<li><strong>预测因果关系</strong>：格兰杰因果检验的是预测能力，而非真正的因果关系</li>
+<li><strong>时间顺序假设</strong>：假设原因在时间上先于结果</li>
+<li><strong>线性假设</strong>：传统方法假设线性关系</li>
+</ol>
+<h3 id="5-4-2-实际局限性"><a href="#5-4-2-实际局限性" class="headerlink" title="5.4.2 实际局限性"></a>5.4.2 实际局限性</h3><ol>
+<li><strong>遗漏变量偏差</strong>：如果存在未观测的混淆变量，可能导致错误结论</li>
+<li><strong>测量误差</strong>：时间序列的测量误差会影响检验结果</li>
+<li><strong>样本大小</strong>：需要足够大的样本量才能获得可靠结果</li>
+</ol>
+<h2 id="5-5-改进方法"><a href="#5-5-改进方法" class="headerlink" title="5.5 改进方法"></a>5.5 改进方法</h2><h3 id="5-5-1-非线性格兰杰因果"><a href="#5-5-1-非线性格兰杰因果" class="headerlink" title="5.5.1 非线性格兰杰因果"></a>5.5.1 非线性格兰杰因果</h3><p>对于非线性关系，可以使用核方法或神经网络：</p>
+<p>$$Y_t &#x3D; f(Y_{t-1}, …, Y_{t-p}, X_{t-1}, …, X_{t-p}) + \epsilon_t$$</p>
+<h3 id="5-5-2-频域格兰杰因果"><a href="#5-5-2-频域格兰杰因果" class="headerlink" title="5.5.2 频域格兰杰因果"></a>5.5.2 频域格兰杰因果</h3><p>在频域中检验格兰杰因果关系，可以分析不同频率成分的因果关系。</p>
+<h3 id="5-5-3-条件格兰杰因果"><a href="#5-5-3-条件格兰杰因果" class="headerlink" title="5.5.3 条件格兰杰因果"></a>5.5.3 条件格兰杰因果</h3><p>考虑其他变量的影响，检验条件格兰杰因果关系：</p>
+<p>$$E[Y_t|Y_{t-1}, …, Y_{t-p}, X_{t-1}, …, X_{t-p}, Z_{t-1}, …, Z_{t-p}] \neq E[Y_t|Y_{t-1}, …, Y_{t-p}, Z_{t-1}, …, Z_{t-p}]$$</p>
+<h2 id="5-6-实际应用示例"><a href="#5-6-实际应用示例" class="headerlink" title="5.6 实际应用示例"></a>5.6 实际应用示例</h2><h3 id="5-6-1-经济学应用"><a href="#5-6-1-经济学应用" class="headerlink" title="5.6.1 经济学应用"></a>5.6.1 经济学应用</h3><p>格兰杰因果检验在经济学中广泛应用，例如：</p>
+<ul>
+<li>货币供应量与通货膨胀的关系</li>
+<li>股票价格与交易量的关系</li>
+<li>经济增长与投资的关系</li>
+</ul>
+<h3 id="5-6-2-神经科学应用"><a href="#5-6-2-神经科学应用" class="headerlink" title="5.6.2 神经科学应用"></a>5.6.2 神经科学应用</h3><p>在脑电图（EEG）数据分析中，格兰杰因果检验用于：</p>
+<ul>
+<li>分析不同脑区之间的信息流向</li>
+<li>研究认知任务中的脑网络连接</li>
+<li>诊断神经系统疾病</li>
+</ul>
+<h3 id="5-6-3-环境科学应用"><a href="#5-6-3-环境科学应用" class="headerlink" title="5.6.3 环境科学应用"></a>5.6.3 环境科学应用</h3><p>在环境科学中，格兰杰因果检验用于：</p>
+<ul>
+<li>分析气候变化与人类活动的关系</li>
+<li>研究污染物浓度与气象条件的关系</li>
+<li>预测自然灾害的发生</li>
+</ul>
+<h1 id="6-与约束方法的比较"><a href="#6-与约束方法的比较" class="headerlink" title="6. 与约束方法的比较"></a>6. 与约束方法的比较</h1><table>
+<thead>
+<tr>
+<th>特征</th>
+<th>基于约束的方法</th>
+<th>基于评分的方法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>计算效率</td>
+<td>高</td>
+<td>低</td>
+</tr>
+<tr>
+<td>全局最优性</td>
+<td>否</td>
+<td>是</td>
+</tr>
+<tr>
+<td>噪声鲁棒性</td>
+<td>低</td>
+<td>高</td>
+</tr>
+<tr>
+<td>可解释性</td>
+<td>高</td>
+<td>中等</td>
+</tr>
+<tr>
+<td>先验知识</td>
+<td>难以融入</td>
+<td>易于融入</td>
+</tr>
+</tbody></table>
+<h1 id="7-总结"><a href="#7-总结" class="headerlink" title="7. 总结"></a>7. 总结</h1><p>基于评分的方法为因果发现提供了一个强大的框架，通过定义合适的评分函数和搜索算法，可以找到高质量的因果结构。虽然计算复杂度较高，但在处理噪声数据和融入先验知识方面具有明显优势。</p>
+<p>在实际应用中，可以根据具体问题的特点选择合适的评分函数和搜索算法，或者将基于约束的方法和基于评分的方法结合起来使用。 </p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://example.com">ZHI</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://example.com/2024/03/22/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B003%EF%BC%9A%E5%9F%BA%E4%BA%8E%E8%AF%84%E5%88%86%E7%9A%84%E6%96%B9%E6%B3%95/">http://example.com/2024/03/22/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B003%EF%BC%9A%E5%9F%BA%E4%BA%8E%E8%AF%84%E5%88%86%E7%9A%84%E6%96%B9%E6%B3%95/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="http://example.com" target="_blank">ZHI's room</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/">论文总结</a><a class="post-meta__tags" href="/tags/%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB/">技术分享</a></div><div class="post-share"><div class="social-share" data-image="https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-tag" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2024/03/21/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B002%EF%BC%9A%E5%9F%BA%E4%BA%8E%E7%BA%A6%E6%9D%9F%E7%9A%84%E6%96%B9%E6%B3%95/" title="因果发现02：基于约束的方法"><img class="cover" src="https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-tag" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">因果发现02：基于约束的方法</div></div><div class="info-2"><div class="info-item-1">  1. Peter-Clark (PC) algorithmPC算法的前身是SGS算法，对于每对节点$A, B$, 需要遍历图中除了$A, B$节点外全部节点的子集$S \in V &#x2F; {A, B}$对$A, B$是否d独立。在SGS算法的基础上，PC算法对条件集合进行了筛选，只判断节点$A, B$的邻居节点的子集作为条件集合 $\bold{输入}$：表格数据，每列代表一个特征；独立性检验的显著性水平 $\bold{输出}$：马尔可夫等价类（PDAG，部分有向无环图），有相同的骨架和v结构 1.1 算法假设 因果充分性假设：当变量集$V$中的任意两个变量的直接原因变量都存在$V$中时, 变量集$V$就被认为是因果充分的。（也就是说，不存在不被观测到的 Confounder）。  因果忠诚性假设（Causal Faithfulness Assumption）：如果在给定变量集的前提下, 变量$v_i$和$v_j$互相独立或条件独立, 那么在由变量及其之间因果依赖关系组成的因果图$G$中，$v_i$和$v_j$之间的所有路径被变量集$V$中合适的变量d-分离...</div></div></div></a><a class="pagination-related" href="/2025/04/15/%E3%80%90Mac%E7%89%88%E3%80%91%E5%BF%AB%E9%80%9F%E7%94%A8hexo%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" title="【Mac版】快速用hexo搭建个人博客"><img class="cover" src="https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-tag" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">【Mac版】快速用hexo搭建个人博客</div></div><div class="info-2"><div class="info-item-1">   前言一直想创建一个个人博客，记录一些工作生活的所思所想，最近刚好有时间就尝试了下，同时记录一下搭建过程。 博客框架有很多，大体分为静态网页和动态网页。静态网页是纯粹用前端技术搭建的网站，主要用文件夹管理博客内容，优点是速度快；动态网站是后台数据库和前端页面分离，例如CSDN，我们可以直接在网页上写博客。 在这里我们选用了静态网页框架Hexo，有如下几个优点。  运行效果极佳，成本低 多平台：本地、云、PC、移动端通吃 支持多种CDN服务（开启可以提高网页的打卡速度） 各大搜索引擎对网站的收录及权重有较大优势（用户搜到你发布的内容可能性更大）  开发工具 博客框架：Hexo 编辑器：PyCharm，Cursor，VScode 运行环境：Node.js 代码托管：Github，Vercel 科学上网：Clash  搭建步骤1. 安装node.jsnode.js是一个基于Chrome V8引擎的JavaScript运行环境。它可以让我们脱离浏览器，在服务器或本地运行JavaScript代码。 此外，在安装Node.js的同时，会自动下载npm(Node Package...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2024/03/21/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B001%EF%BC%9A%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B0%E4%BB%8B%E7%BB%8D/" title="因果发现01：因果发现介绍"><img class="cover" src="https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-tag" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-21</div><div class="info-item-2">因果发现01：因果发现介绍</div></div><div class="info-2"><div class="info-item-1">   因果发现介绍1. 因果发现简介因果发现（Causal Discovery）是机器学习领域的一个重要分支，旨在从数据中推断出变量之间的因果关系。因果发现的目标是识别出变量之间的因果关系，而不仅仅是关联关系。若两变量存在因果关系，则一定相关；反之若只是相关，则不一定是因果。 2. 经典因果发现算法经典因果发现算法大致包括三类，分别是基于约束的方法、基于分数的方法和基于结构方程的方法。 2.1 基于约束的方法基于约束的方法通过检查数据的条件独立性来推断因果关系。首先初始化一个全连接图，每个节点代表一个特征，每条边代表相关关系，然后通过条件独立性删除边，将剩下的边按照一系列规则直接转为有向边。 该方法只需要用到建设检验的知识，并且结果非常稳定，但是最终根据规则有些边的方向无法判断，只能得到一个部分有向无环图，也叫做马尔可夫等价类。 2.2 基于分数的方法基于分数的方法通过最大化得分来推断因果关系。“得分”可以是贝叶斯评分（BDeu,...</div></div></div></a><a class="pagination-related" href="/2024/03/21/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B002%EF%BC%9A%E5%9F%BA%E4%BA%8E%E7%BA%A6%E6%9D%9F%E7%9A%84%E6%96%B9%E6%B3%95/" title="因果发现02：基于约束的方法"><img class="cover" src="https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-tag" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-21</div><div class="info-item-2">因果发现02：基于约束的方法</div></div><div class="info-2"><div class="info-item-1">  1. Peter-Clark (PC) algorithmPC算法的前身是SGS算法，对于每对节点$A, B$, 需要遍历图中除了$A, B$节点外全部节点的子集$S \in V &#x2F; {A, B}$对$A, B$是否d独立。在SGS算法的基础上，PC算法对条件集合进行了筛选，只判断节点$A, B$的邻居节点的子集作为条件集合 $\bold{输入}$：表格数据，每列代表一个特征；独立性检验的显著性水平 $\bold{输出}$：马尔可夫等价类（PDAG，部分有向无环图），有相同的骨架和v结构 1.1 算法假设 因果充分性假设：当变量集$V$中的任意两个变量的直接原因变量都存在$V$中时, 变量集$V$就被认为是因果充分的。（也就是说，不存在不被观测到的 Confounder）。  因果忠诚性假设（Causal Faithfulness Assumption）：如果在给定变量集的前提下, 变量$v_i$和$v_j$互相独立或条件独立, 那么在由变量及其之间因果依赖关系组成的因果图$G$中，$v_i$和$v_j$之间的所有路径被变量集$V$中合适的变量d-分离...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://cdn.jsdelivr.net/gh/Tonghui-zhi/blog-img/img/blog-img-avatar" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">ZHI</div><div class="author-info-description">热爱技术，热爱生活</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">6</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">2</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Tonghui-zhi"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Tonghui-zhi" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:zhitonghui2021@163.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到我的博客！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-%E5%9F%BA%E4%BA%8E%E8%AF%84%E5%88%86%E7%9A%84%E6%96%B9%E6%B3%95%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">1. 基于评分的方法概述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-%E5%9F%BA%E6%9C%AC%E6%80%9D%E6%83%B3"><span class="toc-number">1.1.</span> <span class="toc-text">1.1 基本思想</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-%E4%B8%BB%E8%A6%81%E4%BC%98%E5%8A%BF"><span class="toc-number">1.2.</span> <span class="toc-text">1.2 主要优势</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-3-%E4%B8%BB%E8%A6%81%E6%8C%91%E6%88%98"><span class="toc-number">1.3.</span> <span class="toc-text">1.3 主要挑战</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-%E5%B8%B8%E7%94%A8%E8%AF%84%E5%88%86%E5%87%BD%E6%95%B0"><span class="toc-number">2.</span> <span class="toc-text">2. 常用评分函数</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-%E8%B4%9D%E5%8F%B6%E6%96%AF%E4%BF%A1%E6%81%AF%E5%87%86%E5%88%99%EF%BC%88BIC%EF%BC%89"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 贝叶斯信息准则（BIC）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-Akaike%E4%BF%A1%E6%81%AF%E5%87%86%E5%88%99%EF%BC%88AIC%EF%BC%89"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 Akaike信息准则（AIC）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-%E6%9C%80%E5%B0%8F%E6%8F%8F%E8%BF%B0%E9%95%BF%E5%BA%A6%EF%BC%88MDL%EF%BC%89"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 最小描述长度（MDL）</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95"><span class="toc-number">3.</span> <span class="toc-text">3. 搜索算法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-%E8%B4%AA%E5%A9%AA%E6%90%9C%E7%B4%A2"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 贪婪搜索</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-%E6%A8%A1%E6%8B%9F%E9%80%80%E7%81%AB"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 模拟退火</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3-%E9%81%97%E4%BC%A0%E7%AE%97%E6%B3%95"><span class="toc-number">3.3.</span> <span class="toc-text">3.3 遗传算法</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toc-number">4.</span> <span class="toc-text">4. 实际应用示例</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#4-1-%E9%AB%98%E6%96%AF%E8%B4%9D%E5%8F%B6%E6%96%AF%E7%BD%91%E7%BB%9C"><span class="toc-number">4.1.</span> <span class="toc-text">4.1 高斯贝叶斯网络</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-2-%E7%A6%BB%E6%95%A3%E8%B4%9D%E5%8F%B6%E6%96%AF%E7%BD%91%E7%BB%9C"><span class="toc-number">4.2.</span> <span class="toc-text">4.2 离散贝叶斯网络</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-%E6%A0%BC%E5%85%B0%E6%9D%B0%E5%9B%A0%E6%9E%9C%E6%A3%80%E9%AA%8C"><span class="toc-number">5.</span> <span class="toc-text">5. 格兰杰因果检验</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#5-1-%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-1-%E6%A0%BC%E5%85%B0%E6%9D%B0%E5%9B%A0%E6%9E%9C%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="toc-number">5.1.1.</span> <span class="toc-text">5.1.1 格兰杰因果的定义</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-2-%E6%A3%80%E9%AA%8C%E6%96%B9%E6%B3%95"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 检验方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-1-%E5%8F%8C%E5%8F%98%E9%87%8F%E6%A0%BC%E5%85%B0%E6%9D%B0%E5%9B%A0%E6%9E%9C%E6%A3%80%E9%AA%8C"><span class="toc-number">5.2.1.</span> <span class="toc-text">5.2.1 双变量格兰杰因果检验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-2-%E6%A3%80%E9%AA%8C%E7%BB%9F%E8%AE%A1%E9%87%8F"><span class="toc-number">5.2.2.</span> <span class="toc-text">5.2.2 检验统计量</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-3-%E5%A4%9A%E5%8F%98%E9%87%8F%E6%A0%BC%E5%85%B0%E6%9D%B0%E5%9B%A0%E6%9E%9C%E6%A3%80%E9%AA%8C"><span class="toc-number">5.3.</span> <span class="toc-text">5.3 多变量格兰杰因果检验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-4-%E6%A0%BC%E5%85%B0%E6%9D%B0%E5%9B%A0%E6%9E%9C%E7%9A%84%E5%B1%80%E9%99%90%E6%80%A7"><span class="toc-number">5.4.</span> <span class="toc-text">5.4 格兰杰因果的局限性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-1-%E6%A6%82%E5%BF%B5%E5%B1%80%E9%99%90%E6%80%A7"><span class="toc-number">5.4.1.</span> <span class="toc-text">5.4.1 概念局限性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-2-%E5%AE%9E%E9%99%85%E5%B1%80%E9%99%90%E6%80%A7"><span class="toc-number">5.4.2.</span> <span class="toc-text">5.4.2 实际局限性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-5-%E6%94%B9%E8%BF%9B%E6%96%B9%E6%B3%95"><span class="toc-number">5.5.</span> <span class="toc-text">5.5 改进方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-1-%E9%9D%9E%E7%BA%BF%E6%80%A7%E6%A0%BC%E5%85%B0%E6%9D%B0%E5%9B%A0%E6%9E%9C"><span class="toc-number">5.5.1.</span> <span class="toc-text">5.5.1 非线性格兰杰因果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-2-%E9%A2%91%E5%9F%9F%E6%A0%BC%E5%85%B0%E6%9D%B0%E5%9B%A0%E6%9E%9C"><span class="toc-number">5.5.2.</span> <span class="toc-text">5.5.2 频域格兰杰因果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-3-%E6%9D%A1%E4%BB%B6%E6%A0%BC%E5%85%B0%E6%9D%B0%E5%9B%A0%E6%9E%9C"><span class="toc-number">5.5.3.</span> <span class="toc-text">5.5.3 条件格兰杰因果</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-6-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toc-number">5.6.</span> <span class="toc-text">5.6 实际应用示例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-6-1-%E7%BB%8F%E6%B5%8E%E5%AD%A6%E5%BA%94%E7%94%A8"><span class="toc-number">5.6.1.</span> <span class="toc-text">5.6.1 经济学应用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-6-2-%E7%A5%9E%E7%BB%8F%E7%A7%91%E5%AD%A6%E5%BA%94%E7%94%A8"><span class="toc-number">5.6.2.</span> <span class="toc-text">5.6.2 神经科学应用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-6-3-%E7%8E%AF%E5%A2%83%E7%A7%91%E5%AD%A6%E5%BA%94%E7%94%A8"><span class="toc-number">5.6.3.</span> <span class="toc-text">5.6.3 环境科学应用</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#6-%E4%B8%8E%E7%BA%A6%E6%9D%9F%E6%96%B9%E6%B3%95%E7%9A%84%E6%AF%94%E8%BE%83"><span class="toc-number">6.</span> <span class="toc-text">6. 与约束方法的比较</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#7-%E6%80%BB%E7%BB%93"><span class="toc-number">7.</span> <span class="toc-text">7. 总结</span></a></li></ol></div></div><div class="card-widget card-post-series"><div class="item-headline"><i class="fa-solid fa-layer-group"></i><span>系列文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/03/22/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B003%EF%BC%9A%E5%9F%BA%E4%BA%8E%E8%AF%84%E5%88%86%E7%9A%84%E6%96%B9%E6%B3%95/" title="因果发现03：基于评分的方法">因果发现03：基于评分的方法</a><time datetime="2024-03-21T16:00:00.000Z" title="发表于 2024-03-22 00:00:00">2024-03-22</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/03/21/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B001%EF%BC%9A%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B0%E4%BB%8B%E7%BB%8D/" title="因果发现01：因果发现介绍">因果发现01：因果发现介绍</a><time datetime="2024-03-20T16:00:00.000Z" title="发表于 2024-03-21 00:00:00">2024-03-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/03/21/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B002%EF%BC%9A%E5%9F%BA%E4%BA%8E%E7%BA%A6%E6%9D%9F%E7%9A%84%E6%96%B9%E6%B3%95/" title="因果发现02：基于约束的方法">因果发现02：基于约束的方法</a><time datetime="2024-03-20T16:00:00.000Z" title="发表于 2024-03-21 00:00:00">2024-03-21</time></div></div></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/06/18/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B004:%20%E5%9F%BA%E4%BA%8E%E6%96%B9%E7%A8%8B%E7%9A%84%E6%96%B9%E6%B3%95/" title="因果发现04: 基于方程的方法">因果发现04: 基于方程的方法</a><time datetime="2025-06-18T13:19:37.000Z" title="发表于 2025-06-18 21:19:37">2025-06-18</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/05/22/%E6%9D%A1%E4%BB%B6%E7%8B%AC%E7%AB%8B%E6%80%A7%E6%A3%80%E9%AA%8C/" title="条件独立性检验">条件独立性检验</a><time datetime="2025-05-22T09:56:56.000Z" title="发表于 2025-05-22 17:56:56">2025-05-22</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/04/15/%E3%80%90Mac%E7%89%88%E3%80%91%E5%BF%AB%E9%80%9F%E7%94%A8hexo%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/" title="【Mac版】快速用hexo搭建个人博客">【Mac版】快速用hexo搭建个人博客</a><time datetime="2025-04-15T10:06:43.000Z" title="发表于 2025-04-15 18:06:43">2025-04-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/03/22/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B003%EF%BC%9A%E5%9F%BA%E4%BA%8E%E8%AF%84%E5%88%86%E7%9A%84%E6%96%B9%E6%B3%95/" title="因果发现03：基于评分的方法">因果发现03：基于评分的方法</a><time datetime="2024-03-21T16:00:00.000Z" title="发表于 2024-03-22 00:00:00">2024-03-22</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/03/21/%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B001%EF%BC%9A%E5%9B%A0%E6%9E%9C%E5%8F%91%E7%8E%B0%E4%BB%8B%E7%BB%8D/" title="因果发现01：因果发现介绍">因果发现01：因果发现介绍</a><time datetime="2024-03-20T16:00:00.000Z" title="发表于 2024-03-21 00:00:00">2024-03-21</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2019 - 2025 By ZHI</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.3.5</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
